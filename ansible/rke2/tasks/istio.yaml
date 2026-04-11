@@ -1,0 +1,155 @@
+- name: Create istio-system namespace manifest
+  ansible.builtin.copy:
+    dest: /var/lib/rancher/rke2/server/manifests/istio-system-ns.yaml
+    content: |
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: istio-system
+      ---
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: istio-ingress
+      ---
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: default
+        labels:
+          istio.io/dataplane-mode: ambient
+    mode: '0644'
+  when:
+    - inventory_hostname == groups[rke2_servers_group_name].0
+    - rke2_istio_enabled | bool 
+    - not rke2_uninstall | bool
+
+- name: Download gateway-api experimental install manifest
+  ansible.builtin.get_url:
+    url: https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/experimental-install.yaml
+    dest: /var/lib/rancher/rke2/server/manifests/gateway-api-experimental-install.yaml
+    mode: '0644'
+    validate_certs: yes
+  when:
+    - inventory_hostname == groups[rke2_servers_group_name].0
+    - rke2_istio_enabled | bool
+    - not rke2_uninstall | bool
+
+- name: Create IstioBase HelmChart manifest
+  ansible.builtin.copy:
+    dest: /var/lib/rancher/rke2/server/manifests/istio-base.yaml
+    content: |
+      apiVersion: helm.cattle.io/v1
+      kind: HelmChart
+      metadata:
+        name: istio-base
+        namespace: kube-system
+      spec:
+        chart: base
+        repo: https://istio-release.storage.googleapis.com/charts
+        version: 1.29.1
+        targetNamespace: istio-system
+        createNamespace: true
+        bootstrap: true
+    mode: '0644'
+  when:
+    - inventory_hostname == groups[rke2_servers_group_name].0  
+    - rke2_istio_enabled | bool 
+    - not rke2_uninstall | bool
+
+- name: Create Istiod HelmChart manifest
+  ansible.builtin.copy:
+    dest: /var/lib/rancher/rke2/server/manifests/istio-istiod.yaml
+    content: |
+      apiVersion: helm.cattle.io/v1
+      kind: HelmChart
+      metadata:
+        name: istio-istiod
+        namespace: kube-system
+      spec:
+        chart: istiod 
+        repo: https://istio-release.storage.googleapis.com/charts
+        version: 1.29.1
+        targetNamespace: istio-system
+        createNamespace: true
+        bootstrap: true
+        set:
+          profile: ambient            
+    mode: '0644'
+  when:
+    - inventory_hostname == groups[rke2_servers_group_name].0  
+    - rke2_istio_enabled | bool 
+    - not rke2_uninstall | bool
+
+- name: Create IstioCNI HelmChart manifest
+  ansible.builtin.copy:
+    dest: /var/lib/rancher/rke2/server/manifests/istio-cni.yaml
+    content: |
+      apiVersion: helm.cattle.io/v1
+      kind: HelmChart
+      metadata:
+        name: istio-cni
+        namespace: kube-system
+      spec:
+        chart: cni
+        repo: https://istio-release.storage.googleapis.com/charts
+        version: 1.29.1
+        targetNamespace: istio-system
+        createNamespace: true
+        bootstrap: true
+        set:
+          profile: ambient            
+    mode: '0644'
+  when:
+    - inventory_hostname == groups[rke2_servers_group_name].0  
+    - rke2_istio_enabled | bool 
+    - not rke2_uninstall | bool
+
+- name: Create Dataplane ztunnel HelmChart manifest
+  ansible.builtin.copy:
+    dest: /var/lib/rancher/rke2/server/manifests/istio-ztunnel.yaml
+    content: |
+      apiVersion: helm.cattle.io/v1
+      kind: HelmChart
+      metadata:
+        name: istio-ztunnel
+        namespace: kube-system
+      spec:
+        chart: ztunnel
+        repo: https://istio-release.storage.googleapis.com/charts
+        version: 1.29.1
+        targetNamespace: istio-system
+        createNamespace: true
+        bootstrap: true          
+    mode: '0644'
+  when:
+    - inventory_hostname == groups[rke2_servers_group_name].0  
+    - rke2_istio_enabled | bool 
+    - not rke2_uninstall | bool
+
+- name: Create IstioGateway HelmChart manifest
+  ansible.builtin.copy:
+    dest: /var/lib/rancher/rke2/server/manifests/istio-gateway.yaml
+    content: |
+      apiVersion: helm.cattle.io/v1
+      kind: HelmChart
+      metadata:
+        name: istio-ingress
+        namespace: kube-system
+      spec:
+        chart: gateway
+        repo: https://istio-release.storage.googleapis.com/charts
+        version: 1.29.1
+        targetNamespace: istio-ingress
+        createNamespace: true
+        bootstrap: true
+        valuesContent: |-
+          service:
+            type: LoadBalancer
+          annotations:
+            kube-vip.io/loadbalancerIPs: "192.168.1.53"  
+    mode: '0644'
+  when:
+    - inventory_hostname == groups[rke2_servers_group_name].0  
+    - rke2_istio_enabled | bool 
+    - not rke2_uninstall | bool

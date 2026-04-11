@@ -1,0 +1,51 @@
+- name: Create longhorn-system namespace manifest
+  ansible.builtin.copy:
+    dest: /var/lib/rancher/rke2/server/manifests/longhorn-system-ns.yaml
+    content: |
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: longhorn-system
+    mode: '0644'
+  when:
+    - inventory_hostname == groups[rke2_servers_group_name].0
+    - rke2_longhorn_enabled | bool 
+    - not rke2_uninstall | bool
+
+- name: longhorn HelmChart manifest
+  ansible.builtin.copy:
+    dest: /var/lib/rancher/rke2/server/manifests/longhorn.yaml
+    content: |
+      apiVersion: helm.cattle.io/v1
+      kind: HelmChart
+      metadata:
+        name: longhorn
+        namespace: kube-system
+      spec:
+        repo: https://charts.longhorn.io
+        chart: longhorn
+        version: 1.11.1 # Highly recommended to pin your version
+        targetNamespace: longhorn-system
+        createNamespace: true
+        valuesContent: |-
+          persistence:
+            defaultClass: false
+            defaultClassReplicaCount: 1
+          csi:
+            attacherReplicaCount: 2
+            provisionerReplicaCount: 2
+            resizerReplicaCount: 2
+            snapshotterReplicaCount: 2          
+          longhornUI:
+            replicas: 1          
+          service:
+            ui:
+              type: LoadBalancer
+          defaultSettings:
+            replicaAutoBalance: "disabled"
+            nodeDownPodReplacementPolicy: "disabled"
+            allowVolumeCreationWithDegradedAvailability: "true"
+  when:
+  - inventory_hostname == groups[rke2_servers_group_name].0
+  - rke2_longhorn_enabled | bool 
+  - not rke2_uninstall | bool

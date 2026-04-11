@@ -1,0 +1,78 @@
+- name: Create ArgoCD namespace manifest
+  ansible.builtin.copy:
+    dest: /var/lib/rancher/rke2/server/manifests/argocd-ns.yaml
+    content: |
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: argocd
+    mode: '0644'
+  when:
+    - inventory_hostname == groups[rke2_servers_group_name].0
+    - rke2_argocd_enabled | bool 
+    - not rke2_uninstall | bool
+
+- name: Create ArgoCD HelmChart manifest
+  ansible.builtin.copy:
+    dest: /var/lib/rancher/rke2/server/manifests/argocd.yaml
+    content: |
+      apiVersion: helm.cattle.io/v1
+      kind: HelmChart
+      metadata:
+        name: argocd
+        namespace: kube-system
+      spec:
+        chart: argo-cd
+        repo: https://argoproj.github.io/argo-helm
+        version: 9.4.15
+        targetNamespace: argocd
+        createNamespace: true
+        bootstrap: true
+        valuesContent: |- 
+          server:
+            service:
+              type: LoadBalancer
+            annotations:
+              kube-vip.io/loadbalancerIPs: "192.168.1.51"
+          configs:
+            params:
+              reposerver.log.level: debug
+              server.log.level: debug
+    mode: '0644'
+  when:
+    - inventory_hostname == groups[rke2_servers_group_name].0  
+    - rke2_argocd_enabled | bool 
+    - not rke2_uninstall | bool
+
+- name: Install ArgoCD Applications Manifest from template
+  ansible.builtin.copy:
+    dest: /var/lib/rancher/rke2/server/manifests/argocd-apps.yaml
+    content: |
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: argo
+        namespace: argocd
+      spec:
+        destination:
+          namespace: argocd
+          server: https://kubernetes.default.svc
+        source:
+          path: charts/argocd
+          repoURL: https://github.com/DarthKoax/rke2-homelab.git
+          targetRevision: HEAD
+          helm:
+            valueFiles:
+              - values.yaml
+        sources: []
+        project: default
+        syncPolicy:
+          automated:
+            prune: true
+            selfHeal: true
+            enabled: true
+    mode: '0644'
+  when:
+    - inventory_hostname == groups[rke2_servers_group_name].0  
+    - rke2_argocd_enabled | bool 
+    - not rke2_uninstall | bool

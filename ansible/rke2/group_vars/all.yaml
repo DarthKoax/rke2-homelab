@@ -1,0 +1,48 @@
+---
+rke2_version: v1.35.3-rc3+rke2r1
+rke2_ha_mode: true
+rke2_ha_mode_kubevip: true
+rke2_ha_mode_keepalived: false
+rke2_kubevip_ipvs_lb_enable: true
+rke2_kubevip_cloud_provider_enable: true
+rke2_kubevip_svc_enable: true
+rke2_api_ip: "192.168.1.99" 
+rke2_loadbalancer_ip_range: 
+  range-global: 192.168.1.50-192.168.1.60
+rke2_servers_group_name: masters
+rke2_ingress_controller: none
+rke2_server_taint: false
+rke2_cni: 
+  - canal
+rke2_cis_profile: ""
+rke2_selinux: false
+
+
+# # Path to RKE2 config file template
+# rke2_config: templates/config.yaml.j2
+
+# The role needs a single IP/FQDN to represent the API server.
+# If you don't have an external Load Balancer, you can use the IP of your first node
+# or better yet, enable the built-in Keepalived/Kube-Vip support in the role.
+
+# Ensure no taints are applied so they remain workers
+node_taints: []
+
+
+
+rke2_download_kubeconf: true
+rke2_download_kubeconf_file_name: config
+rke2_download_kubeconf_path: ~/.kube
+rke2_argocd_enabled: true
+rke2_rancher_enabled: false
+rke2_longhorn_enabled: true
+rke2_nfs_provisioner_enabled: true
+rke2_istio_enabled: true
+
+
+dnf_packages:
+  - git
+  - tar
+  - curl
+  - nfs-utils
+  - iscsi-initiator-utils

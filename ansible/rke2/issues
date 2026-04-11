@@ -1,0 +1,89 @@
+Technical Brief: RKE2 + Kube-Vip LoadBalancer Connectivity Issue
+
+## Environment:
+* Distribution: RKE2 (v1.30.2+rke2r1) deployed via lablabs.rke2 Ansible role.
+* OS: RHEL-based nodes (ceres-01, ceres-02).
+* Networking: Kube-vip (Layer 2 ARP mode) providing both Control Plane HA and Service LoadBalancing.
+* Security: firewalld and selinux are disabled.
+* RKE2 Installed to nodes ceres-01 and ceres-02 using lablabs.rke2 ansible role. 
+
+Installation values are as follows: 
+```all.yaml
+---
+rke2_ha_mode_kubevip: true
+
+rke2_ha_mode_keepalived: false
+rke2_kubevip_ipvs_lb_enable: true
+
+rke2_kubevip_cloud_provider_enable: true
+rke2_kubevip_svc_enable: true
+rke2_loadbalancer_ip_range: 
+  range-global: 192.168.1.50-192.168.1.60
+rke2_servers_group_name: masters
+
+# The role needs a single IP/FQDN to represent the API server.
+# If you don't have an external Load Balancer, you can use the IP of your first node
+# or better yet, enable the built-in Keepalived/Kube-Vip support in the role.
+rke2_api_ip: "192.168.1.99" 
+
+# Ensure no taints are applied so they remain workers
+node_taints: []
+
+# Optional: Choose your CNI (Canal is the default)
+rke2_cni: 
+  - canal
+
+rke2_selinux: true
+rke2_download_kubeconf: true
+rke2_argocd_enabled: true
+```
+
+The Problem:
+A Kubernetes service of type: LoadBalancer successfully receives an External IP from the Kube-vip pool. While this IP is pingable from external machines, TCP traffic (HTTP/80) times out when accessed from the node itself or from external clients.
+## Evidence and Logs
+
+Service Status:
+The service nginx has successfully been assigned 192.168.1.50.
+```
+NAME    TYPE           CLUSTER-IP     EXTERNAL-IP    PORT(S)        AGE
+nginx   LoadBalancer   10.43.54.248   192.168.1.50   80:31397/TCP   10m
+```
+
+Local Reachability (Success):
+* Accessing the application via localhost:NodePort works: curl http://localhost:31397 returns "Hello world!".
+```
+[root@ceres-01 manifests]# curl -I http://localhost:31397
+HTTP/1.1 200 OK
+Server: nginx/1.29.6
+Date: Sat, 21 Mar 2026 03:39:48 GMT
+Content-Type: text/plain
+Content-Length: 12
+Connection: keep-alive
+```
+
+* Accessing the VIP from inside the pod works: curl 192.168.1.50 returns "Hello world!".
+
+VIP Binding on Host (Success):
+The IP is correctly bound to the physical interface enp0s31f6 on ceres-01:
+Bash
+
+[root@ceres-01 manifests]# ip addr show | grep 192.168.1.50
+    inet 192.168.1.50/32 scope global enp0s31f6
+
+External/Node Reachability (Failure):
+* ping 192.168.1.50 works from external clients.
+* curl -I http://192.168.1.50 from the host or external clients times out:
+
+```
+Trying 192.168.1.50:80... (Timeout)
+```
+
+
+## Troubleshooting Steps Taken
+* Kernel Networking: rp_filter (Reverse Path Filtering) was checked and set to 2 (loose) across all interfaces.
+* Bridge Settings: net.bridge.bridge-nf-call-iptables and ip6tables are both set to 1.
+* Conflict Services: nm-cloud-setup and its timer are "not-found" (not interfering).
+* Port Listeners: ss -tulpn confirms kube-vip is listening on :2112, but there is no native listener on :80 (expected, as this should be handled by iptables/kube-proxy).
+
+## Key Observation
+Since the Pod can reach the VIP but the Host cannot, the issue likely resides in the IPtables/Routing transition between the physical interface and the Kube-proxy chains. The traffic hits the interface (evidenced by Ping), but the TCP SYN packets are not being successfully DNAT'ed to the service endpoints when originating from or arriving at the host's physical NIC.

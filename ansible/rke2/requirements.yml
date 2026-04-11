@@ -1,0 +1,4 @@
+---
+roles:
+  - name: rke2
+    src: lablabs.rke2

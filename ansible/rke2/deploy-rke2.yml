@@ -1,0 +1,61 @@
+- name: Deploy RKE2
+  hosts: all
+  become: yes
+  vars:
+    rke2_uninstall: false
+
+  tasks:
+    - name: Install DNF packages
+      ansible.builtin.yum:
+        name: "{{ dnf_packages }}"
+        state: present
+
+    - name: Ensure iscsid is enabled and running
+      ansible.builtin.systemd:
+        name: iscsid
+        enabled: true
+        state: started
+        
+    - name: debug
+      ansible.builtin.debug:
+        msg: " {{inventory_hostname}} == {{groups[rke2_servers_group_name].0}} | {{ rke2_ha_mode | bool}} | {{rke2_ha_mode_kubevip | bool }} | {{ rke2_ha_mode_keepalived | bool }}"
+
+    # Run Uninstall ONLY if rke2_uninstall is true
+    - name: Uninstall RKE2 when uninstall is enabled
+      ansible.builtin.include_tasks: tasks/uninstall.yaml
+      when:
+        - rke2_uninstall | bool
+
+    # Run Install/Role ONLY if rke2_uninstall is false
+    - name: Install RKE2 via LabLabs Role
+      ansible.builtin.include_role:
+        name: lablabs.rke2  # Ensure this matches your local role name
+      when: not rke2_uninstall | bool
+    
+    # Run ArgoCD ONLY if installing AND enabled
+    - name: Install argocd when argocd is enabled
+      ansible.builtin.include_tasks: tasks/argocd.yaml
+      when:
+        - not rke2_uninstall | bool
+        - rke2_argocd_enabled | bool
+
+    # Run LongHorn ONLY if installing AND enabled
+    - name: Install longhorn when longhorn is enabled
+      ansible.builtin.include_tasks: tasks/longhorn.yaml
+      when:
+        - not rke2_uninstall | bool
+        - rke2_longhorn_enabled | bool
+
+    # Run nfs-provisioner ONLY if installing AND enabled
+    - name: Install NFS when nfs-provisioner is enabled
+      ansible.builtin.include_tasks: tasks/nfs-provisioner.yaml
+      when:
+        - not rke2_uninstall | bool
+        - rke2_nfs_provisioner_enabled | bool
+
+     # Run istio ONLY if installing AND enabled
+    - name: Install istio when istio is enabled
+      ansible.builtin.include_tasks: tasks/istio.yaml
+      when:
+        - not rke2_uninstall | bool
+        - rke2_istio_enabled | bool

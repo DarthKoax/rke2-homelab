@@ -1,0 +1,123 @@
+---
+
+- name: "Prompt for confirmation if uninstall is requested"
+  ansible.builtin.pause:
+    prompt: |-
+      =======================================================================
+
+      WARNING: Uninstall RKE2? This cannot be undone. Type 'yes' to continue"
+
+      =======================================================================
+      :
+  register: do_uninstall
+  when: rke2_uninstall | bool
+  run_once: true
+
+- name: Stop and disable RKE2 services (Brute Force)
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+  loop:
+    - rke2-server
+    - rke2-agent
+  failed_when: false # If the service doesn't exist, just keep going
+  become: true
+  when:
+    - rke2_uninstall | bool
+    - do_uninstall.user_input | lower == 'yes'
+
+- name: Check if RKE2 uninstall script exists
+  stat:
+    path: /usr/local/bin/rke2-uninstall.sh
+  register: rke2_uninstall_script
+  become: true
+  when:
+    - rke2_uninstall | bool
+    - do_uninstall.user_input | lower == 'yes'
+
+- name: Run the official RKE2 uninstall script
+  command: /usr/local/bin/rke2-uninstall.sh
+  when: rke2_uninstall_script.stat.exists
+  become: true
+
+- name: Remove RKE2 and Rancher directories
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /var/lib/rancher/rke2
+    - /etc/rancher/rke2
+    - /run/k3s
+    - /run/node-exporter
+  become: true
+  when:
+    - rke2_uninstall | bool
+    - do_uninstall.user_input | lower == 'yes'
+
+- name: Cleanup networking interfaces left by CNI
+  shell: |
+    ifconfig {{ item }} down || true
+    ip link delete {{ item }} || true
+  loop:
+    - cni0
+    - flannel.1
+    - flannel-v6.1
+    - cali+
+  ignore_errors: true
+  become: true
+  when:
+  - rke2_uninstall | bool
+  - do_uninstall.user_input | lower == 'yes'
+
+- name: Remove RKE2 binary if it still exists
+  file:
+    path: /usr/local/bin/rke2
+    state: absent
+  become: true
+  when:
+    - rke2_uninstall | bool
+    - do_uninstall.user_input | lower == 'yes'
+
+- name: Cleanup rke2_api_ip {{ rke2_api_ip }}
+  ansible.builtin.shell: |
+    # 1. Clean up the API IP
+    if ip addr show dev {{ ansible_default_ipv4.interface }} | grep -q "{{ rke2_api_ip }}/32"; then
+      ip addr del {{ rke2_api_ip }}/32 dev {{ ansible_default_ipv4.interface }}
+    fi
+  become: true
+  when: 
+    - rke2_uninstall | bool
+    - do_uninstall.user_input | lower == 'yes'
+  register: ip_cleanup_result
+  changed_when: ip_cleanup_result.rc == 0
+
+
+- name: Cleanup Kube-Vip LoadBalancer IP Range
+  ansible.builtin.shell: |
+    RANGE="{{ rke2_loadbalancer_ip_range['range-global'] }}"
+    START_IP=$(echo $RANGE | cut -d'-' -f1)
+    END_IP=$(echo $RANGE | cut -d'-' -f2)
+    
+    BASE_NET=$(echo $START_IP | cut -d'.' -f1-3)
+    ip addr show dev {{ ansible_default_ipv4.interface }} | grep "inet $BASE_NET" | awk '{print $2}' | cut -d'/' -f1 | while read -r ip; do
+      ip addr del $ip/32 dev {{ ansible_default_ipv4.interface }} || true
+    done
+  become: true
+  when: rke2_uninstall | bool
+  register: ip_cleanup_loadbalancer_result
+  changed_when: ip_cleanup_loadbalancer_result.rc == 0
+
+- name: Flush iptables to clear RKE2-defined rules
+  iptables:
+    flush: yes
+  become: true
+  when:
+    - rke2_uninstall | bool
+
+- name: Reload systemd to clear stale RKE2 units
+  systemd:
+    daemon_reload: true
+  become: true
+  when:
+    - rke2_uninstall | bool
