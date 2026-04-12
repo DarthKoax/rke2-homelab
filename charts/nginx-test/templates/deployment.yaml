@@ -77,7 +77,7 @@ spec:
       name: http
       protocol: HTTP
     hosts:
-    - "nginx.local.barque.io"
+    - "*"
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
@@ -88,7 +88,7 @@ spec:
   gateways:
   - nginx-gateway
   hosts:
-  - "*"
+  - "nginx.local.barque.io"
   http:
   - match:
     - uri:
