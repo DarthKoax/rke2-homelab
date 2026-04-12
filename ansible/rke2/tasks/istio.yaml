@@ -11,6 +11,8 @@
       kind: Namespace
       metadata:
         name: istio-ingress
+        labels:
+          istio.io/dataplane-mode: ambient
       ---
       apiVersion: v1
       kind: Namespace
@@ -97,8 +99,11 @@
         targetNamespace: istio-system
         createNamespace: true
         bootstrap: true
-        set:
-          profile: ambient            
+        valuesContent: |-
+          # cni:
+          #   cniConfDir: /var/lib/rancher/rke2/agent/etc/cni/net.d
+          #   cniBinDir: /var/lib/rancher/rke2/data/current/bin
+          profile: ambient
     mode: '0644'
   when:
     - inventory_hostname == groups[rke2_servers_group_name].0  
@@ -143,7 +148,7 @@
         targetNamespace: istio-ingress
         createNamespace: true
         bootstrap: true
-        valuesContent: |-
+        set:
           service:
             type: LoadBalancer
           annotations:

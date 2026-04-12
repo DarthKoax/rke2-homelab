@@ -70,14 +70,14 @@ metadata:
   namespace: istio-ingress
 spec:
   selector:
-    istio: istio
+    app: istio-ingress
   servers:
   - port:
       number: 80
       name: http
       protocol: HTTP
     hosts:
-    - "*"
+    - "nginx.local.barque.io"
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
