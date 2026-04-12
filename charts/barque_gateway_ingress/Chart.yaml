@@ -1,0 +1,6 @@
+apiVersion: v2
+name: Barque Gateway Ingress
+description: A Helm chart for deploying an Istio API Gateway for Barque.io infrastructure
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
