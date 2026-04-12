@@ -67,6 +67,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
   name: nginx-gateway
+  namespace: istio-ingress
 spec:
   selector:
     istio: istio-ingress
@@ -84,7 +85,7 @@ metadata:
   name: nginx-virtualservice
 spec:
   gateways:
-  - default/nginx-gateway
+  - nginx-gateway
   hosts:
   - "nginx.local.barque.io"
   http:
