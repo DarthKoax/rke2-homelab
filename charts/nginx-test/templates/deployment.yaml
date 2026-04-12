@@ -83,6 +83,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: nginx-virtualservice
+  namespace: istio-ingress
 spec:
   gateways:
   - nginx-gateway
@@ -94,6 +95,6 @@ spec:
         prefix: /
     route:
     - destination:
-        host: nginx # This matches your Service metadata.name
+        host: nginx.default.svc.cluster.local # This matches your Service metadata.name
         port:
           number: 80
