@@ -1,0 +1,7 @@
+istiod:
+  enabled: true
+  profile: ambient
+
+cni:
+  enabled: true
+  profile: ambient

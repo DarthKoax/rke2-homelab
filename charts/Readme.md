@@ -1,5 +1,4 @@
-## helm-docs
-### Install
+### Install ## helm-docs
 ```
 curl -L -o /tmp/helm-docs.tar.gz https://github.com/norwoodj/helm-docs/releases/download/v1.14.2/helm-docs_1.14.2_Linux_x86_64.tar.gz && \
 sudo tar -xf /tmp/helm-docs.tar.gz -C /usr/bin helm-docs

@@ -1,0 +1,19 @@
+apiVersion: v2
+name: istio
+description: Chart for installing Istio on Barque RKE2
+type: application
+version: 1.29.1
+appVersion: "1.29.1"
+dependencies:
+- name: "base"
+  version: "1.29.1"
+  repository: "https://istio-release.storage.googleapis.com/charts"
+- name: "istiod"
+  version: "1.29.1"
+  repository: "https://istio-release.storage.googleapis.com/charts"
+- name: "cni"
+  version: "1.29.1"
+  repository: "https://istio-release.storage.googleapis.com/charts"
+- name: "ztunnel"
+  version: "1.29.1"
+  repository: "https://istio-release.storage.googleapis.com/charts"

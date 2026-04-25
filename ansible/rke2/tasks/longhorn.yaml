@@ -40,7 +40,7 @@
             replicas: 1          
           service:
             ui:
-              type: LoadBalancer
+              type: ClusterIP
           defaultSettings:
             replicaAutoBalance: "disabled"
             nodeDownPodReplacementPolicy: "disabled"

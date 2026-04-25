@@ -15,6 +15,6 @@ spec:
         prefix: /
     route:
     - destination:
-        host: nginx.default.svc.cluster.local # This matches your Service metadata.name
+        host: nginx.default.svc.cluster.local
         port:
           number: 80

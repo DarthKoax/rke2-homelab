@@ -1,0 +1,7 @@
+gateway:
+  enabled: true
+  service:
+    type: LoadBalancer
+  annotations:
+    kube-vip.io/loadbalancerIPs: "192.168.1.53"  
+
