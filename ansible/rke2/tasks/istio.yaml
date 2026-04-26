@@ -5,6 +5,17 @@
       apiVersion: v1
       kind: Namespace
       metadata:
+        name: istio-system
+      ---
+      apiVersion: v1
+      kind: Namespace
+      name: istio-ingress
+        labels:
+          istio.io/dataplane-mode: ambient
+      ---
+      apiVersion: v1
+      kind: Namespace
+      metadata:
         name: default
         labels:
           istio.io/dataplane-mode: ambient
@@ -14,16 +25,16 @@
     - rke2_istio_enabled | bool 
     - not rke2_uninstall | bool
 
-# - name: Download gateway-api experimental install manifest
-#   ansible.builtin.get_url:
-#     url: https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/experimental-install.yaml
-#     dest: /var/lib/rancher/rke2/server/manifests/gateway-api-experimental-install.yaml
-#     mode: '0644'
-#     validate_certs: yes
-#   when:
-#     - inventory_hostname == groups[rke2_servers_group_name].0
-#     - rke2_istio_enabled | bool
-#     - not rke2_uninstall | bool
+- name: Download gateway-api experimental install manifest
+  ansible.builtin.get_url:
+    url: https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/experimental-install.yaml
+    dest: /var/lib/rancher/rke2/server/manifests/gateway-api-experimental-install.yaml
+    mode: '0644'
+    validate_certs: yes
+  when:
+    - inventory_hostname == groups[rke2_servers_group_name].0
+    - rke2_istio_enabled | bool
+    - not rke2_uninstall | bool
 
 # - name: Create IstioBase HelmChart manifest
 #   ansible.builtin.copy:
