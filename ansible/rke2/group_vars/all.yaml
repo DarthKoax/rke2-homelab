@@ -37,7 +37,7 @@ rke2_argocd_enabled: true
 rke2_rancher_enabled: false
 rke2_longhorn_enabled: true
 rke2_nfs_provisioner_enabled: true
-rke2_istio_enabled: false
+rke2_istio_enabled: true
 
 
 dnf_packages:

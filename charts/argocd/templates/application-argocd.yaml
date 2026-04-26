@@ -53,7 +53,7 @@ metadata:
   namespace: argocd
 spec:
   destination:
-    namespace: default
+    namespace: istio-system
     server: https://kubernetes.default.svc
   source:
     path: charts/istio
@@ -77,7 +77,7 @@ metadata:
   namespace: argocd
 spec:
   destination:
-    namespace: default
+    namespace: istio-ingress
     server: https://kubernetes.default.svc
   source:
     path: charts/istio_gateway
