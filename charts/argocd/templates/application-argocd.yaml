@@ -10,7 +10,7 @@ spec:
   source:
     path: charts/nginx-test
     repoURL: https://github.com/DarthKoax/rke2-homelab.git
-    targetRevision: HEAD
+    targetRevision: dev
     helm:
       valueFiles:
         - values.yaml
@@ -34,7 +34,7 @@ spec:
   source:
     path: charts/barque_gateway_ingress
     repoURL: https://github.com/DarthKoax/rke2-homelab.git
-    targetRevision: HEAD
+    targetRevision: dev
     helm:
       valueFiles:
         - values.yaml
@@ -58,7 +58,7 @@ spec:
   source:
     path: charts/istio
     repoURL: https://github.com/DarthKoax/rke2-homelab.git
-    targetRevision: HEAD
+    targetRevision: dev
     helm:
       valueFiles:
         - values.yaml
@@ -82,7 +82,7 @@ spec:
   source:
     path: charts/istio_gateway
     repoURL: https://github.com/DarthKoax/rke2-homelab.git
-    targetRevision: HEAD
+    targetRevision: dev
     helm:
       valueFiles:
         - values.yaml
