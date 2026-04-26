@@ -60,7 +60,7 @@
         source:
           path: charts/argocd
           repoURL: https://github.com/DarthKoax/rke2-homelab.git
-          targetRevision: HEAD
+          targetRevision: dev
           helm:
             valueFiles:
               - values.yaml
