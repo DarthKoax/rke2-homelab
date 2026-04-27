@@ -21,32 +21,32 @@ spec:
       prune: true
       selfHeal: false
       enabled: true
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: barque-gateway
-  namespace: argocd
-spec:
-  destination:
-    namespace: istio-ingress
-    server: https://kubernetes.default.svc
-  source:
-    path: charts/barque_gateway_ingress
-    repoURL: https://github.com/DarthKoax/rke2-homelab.git
-    targetRevision: dev
-    helm:
-      valueFiles:
-        - values.yaml
-  sources: []
-  project: default
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: false
-      enabled: true
-    syncOptions:
-        - CreateNamespace=true
+# ---
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: barque-gateway
+#   namespace: argocd
+# spec:
+#   destination:
+#     namespace: istio-ingress
+#     server: https://kubernetes.default.svc
+#   source:
+#     path: charts/barque_gateway_ingress
+#     repoURL: https://github.com/DarthKoax/rke2-homelab.git
+#     targetRevision: dev
+#     helm:
+#       valueFiles:
+#         - values.yaml
+#   sources: []
+#   project: default
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: false
+#       enabled: true
+#     syncOptions:
+#         - CreateNamespace=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -73,29 +73,29 @@ spec:
       enabled: true
     syncOptions:
       - CreateNamespace=true
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: istio-gateway
-  namespace: argocd
-spec:
-  destination:
-    namespace: istio-ingress
-    server: https://kubernetes.default.svc
-  source:
-    path: charts/istio_gateway
-    repoURL: https://github.com/DarthKoax/rke2-homelab.git
-    targetRevision: dev
-    helm:
-      valueFiles:
-        - values.yaml
-  sources: []
-  project: default
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: false
-      enabled: true
-    syncOptions:
-    - CreateNamespace=true
+# ---
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: istio-gateway
+#   namespace: argocd
+# spec:
+#   destination:
+#     namespace: istio-ingress
+#     server: https://kubernetes.default.svc
+#   source:
+#     path: charts/istio_gateway
+#     repoURL: https://github.com/DarthKoax/rke2-homelab.git
+#     targetRevision: dev
+#     helm:
+#       valueFiles:
+#         - values.yaml
+#   sources: []
+#   project: default
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: false
+#       enabled: true
+#     syncOptions:
+#     - CreateNamespace=true
